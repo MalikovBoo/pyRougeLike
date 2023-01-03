@@ -1,6 +1,10 @@
+import string
+
 from .tile import Tile
 from .rectangle import Rect
-from random import randint
+from random import randint, choice
+from entity import Entity
+import tcod as libtcod
 
 
 class GameMap:
@@ -14,7 +18,7 @@ class GameMap:
         tiles = [[Tile(True) for y in range(self.height)] for x in range(self.width)]
         return tiles
 
-    def make_map(self, room_min_size, room_max_size, map_width, map_height, max_rooms, player):
+    def make_map(self, room_min_size, room_max_size, map_width, map_height, max_rooms, player, entities, max_monster_per_room):
         rooms = []
         num_rooms = 0
         for r in range(max_rooms):
@@ -29,7 +33,7 @@ class GameMap:
                 if new_room.intersect(other_room):
                     break
             else:
-                self.create_room(new_room)
+                self.create_room(new_room, entities, max_monster_per_room)
                 (new_x, new_y) = new_room.center()
 
                 if num_rooms == 0:
@@ -46,11 +50,12 @@ class GameMap:
                 rooms.append(new_room)
                 num_rooms += 1
 
-    def create_room(self, room):
+    def create_room(self, room, entities, max_monster_per_room):
         for x in range(room.x1+1, room.x2):
             for y in range(room.y1+1, room.y2):
                 self.tiles[x][y].blocked = False
                 self.tiles[x][y].block_sight = False
+        self.place_entities(room, entities, max_monster_per_room)
 
     def create_h_tunnel(self, x1, x2, y):
         for x in range(min(x1, x2), max(x1, x2)+1):
@@ -67,3 +72,18 @@ class GameMap:
             return True
 
         return False
+
+    def place_entities(self, room, entities, max_monster_per_room):
+        num_of_monsters = randint(0, max_monster_per_room)
+
+        for i in range(num_of_monsters):
+            x = randint(room.x1 + 1, room.x2 - 1)
+            y = randint(room.y1 + 1, room.y2 - 1)
+            if not any([entity for entity in entities if entity.x == x and entity.y == y]):
+                if randint(0, 100) < 80:
+                    monster = Entity(x, y, "o", libtcod.darker_red,
+                                     "Orc "+choice(string.ascii_uppercase)+choice(string.ascii_lowercase), blocks=True)
+                else:
+                    monster = Entity(x, y, "T", libtcod.darker_green,
+                                     "Troll "+choice(string.ascii_uppercase)+choice(string.ascii_lowercase)+choice(string.ascii_lowercase), blocks=True)
+                entities.append(monster)
