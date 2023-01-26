@@ -5,6 +5,9 @@ from .rectangle import Rect
 from random import randint, choice
 from entity import Entity
 import tcod as libtcod
+from components.fighter import Fighter
+from components.ai import BasicMonster
+from render_functions import RenderOrder
 
 
 class GameMap:
@@ -75,15 +78,20 @@ class GameMap:
 
     def place_entities(self, room, entities, max_monster_per_room):
         num_of_monsters = randint(0, max_monster_per_room)
-
         for i in range(num_of_monsters):
             x = randint(room.x1 + 1, room.x2 - 1)
             y = randint(room.y1 + 1, room.y2 - 1)
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
                 if randint(0, 100) < 80:
+                    ai_component = BasicMonster()
+                    fighter_component = Fighter(10, 0, 2)
                     monster = Entity(x, y, "o", libtcod.darker_red,
-                                     "Orc "+choice(string.ascii_uppercase)+choice(string.ascii_lowercase), blocks=True)
+                                     "Orc "+choice(string.ascii_uppercase)+choice(string.ascii_lowercase), blocks=True,
+                                     render_order=RenderOrder.ACTOR, fighter=fighter_component, ai=ai_component)
                 else:
+                    ai_component = BasicMonster()
+                    fighter_component = Fighter(16, 1, 4)
                     monster = Entity(x, y, "T", libtcod.darker_green,
-                                     "Troll "+choice(string.ascii_uppercase)+choice(string.ascii_lowercase)+choice(string.ascii_lowercase), blocks=True)
+                                     "Troll "+choice(string.ascii_uppercase)+choice(string.ascii_lowercase)+choice(string.ascii_lowercase),
+                                     blocks=True, render_order=RenderOrder.ACTOR, fighter=fighter_component, ai=ai_component)
                 entities.append(monster)
